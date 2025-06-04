@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Budget Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+    h1 { text-align: center; }
+    input, select, button { width: 100%; margin-top: 10px; padding: 10px; }
+    table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+    .totals { margin-top: 20px; font-weight: bold; }
+    .income { color: green; }
+    .expense { color: red; }
+    .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Budget Tracker</h1>
+    <form id="entryForm">
+      <input type="number" id="amount" placeholder="Amount" required />
+      <select id="type">
+        <option value="income">Income</option>
+        <option value="expense">Expense</option>
+      </select>
+      <input type="text" id="category" placeholder="Category" required />
+      <input type="text" id="description" placeholder="Description" required />
+      <button type="submit">Add Entry</button>
+    </form>
+
+    <div class="totals">
+      <p>Total Income: $<span id="totalIncome">0.00</span></p>
+      <p>Total Expenses: $<span id="totalExpenses">0.00</span></p>
+      <p>Balance: $<span id="balance">0.00</span></p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="entryList"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.getElementById("entryForm");
+    const entryList = document.getElementById("entryList");
+    const totalIncomeEl = document.getElementById("totalIncome");
+    const totalExpensesEl = document.getElementById("totalExpenses");
+    const balanceEl = document.getElementById("balance");
+
+    let entries = JSON.parse(localStorage.getItem("budgetEntries")) || [];
+
+    function updateTotals() {
+      let income = 0, expenses = 0;
+      entries.forEach(e => {
+        if (e.type === "income") income += e.amount;
+        else expenses += e.amount;
+      });
+      totalIncomeEl.textContent = income.toFixed(2);
+      totalExpensesEl.textContent = expenses.toFixed(2);
+      balanceEl.textContent = (income - expenses).toFixed(2);
+    }
+
+    function renderEntries() {
+      entryList.innerHTML = "";
+      entries.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td class="${entry.type}">${entry.type}</td>
+          <td>$${entry.amount.toFixed(2)}</td>
+          <td>${entry.category}</td>
+          <td>${entry.description}</td>
+          <td><button class="delete-btn" onclick="deleteEntry(${index})">Delete</button></td>
+        `;
+        entryList.appendChild(row);
+      });
+      updateTotals();
+    }
+
+    function deleteEntry(index) {
+      entries.splice(index, 1);
+      localStorage.setItem("budgetEntries", JSON.stringify(entries));
+      renderEntries();
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const amount = parseFloat(document.getElementById("amount").value);
+      const type = document.getElementById("type").value;
+      const category = document.getElementById("category").value;
+      const description = document.getElementById("description").value;
+
+      if (!amount || amount <= 0) return alert("Please enter a valid amount.");
+
+      const newEntry = { amount, type, category, description };
+      entries.push(newEntry);
+      localStorage.setItem("budgetEntries", JSON.stringify(entries));
+      renderEntries();
+      form.reset();
+    });
+
+    renderEntries();
+  </script>
+</body>
+</html>
